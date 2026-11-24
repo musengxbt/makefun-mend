@@ -1,8 +1,10 @@
-// main.ts is mend, the CLI SPEC.md specifies, and this is the kit's starting point for it (MIT). It does sections 1 to 4, 9 and 10 of SPEC.md: the command line, the output and
-// exit codes, safe paths, format detection, JSON edits and the all-or-nothing write. The other three formats are
-// detected and then read as holding no edit, so they answer `error: parse 1`: reading unified diffs (section 6),
-// SEARCH/REPLACE blocks (section 7) and V4A patches (section 8), and matching lines at three tiers (section 5), are
-// yours to write. Node 22, the standard library alone; run it as `node main.ts [options] [PATCH]`.
+// main.ts is mend, the CLI SPEC.md specifies (MIT). It implements SPEC.md in full: the command line, the output
+// and exit codes, safe paths and format detection (sections 1 to 4, 9 and 10), line matching at three tiers
+// (section 5: exact lines, then lines ignoring trailing whitespace, then lines ignoring all whitespace), and
+// readers for all four edit formats — unified diffs whose hunk line numbers may be wrong (section 6),
+// SEARCH/REPLACE blocks (section 7), V4A patches (section 8) and JSON tool-call edits. Every change is
+// gathered first and written all-or-nothing. Node 22, the standard library alone; run it as
+// `node main.ts [options] [PATCH]`.
 //
 // In a trial the grader runs `node /bot/main.ts` with MAKEFUN_ENV_URL set, and then this file hands over to runner.ts
 // (the last lines below): keep that hand-over and runner.ts as they are, and write the CLI.
@@ -166,6 +168,10 @@ function jsonEdits(text: string, lines: string[]): Edit[] {
 }
 
 // ---- Sections 3, 5, 6, 7, 8: file lines, tiered matching, unified, SEARCH/REPLACE, V4A ----
+// Matching is tiered (section 5): a block of old lines is searched at tier 0 (exact), then tier 1
+// (trailing whitespace ignored), then tier 2 (all leading/trailing whitespace ignored), and the first
+// tier that finds it anywhere wins; a tier that finds it more than once is an ambiguity error, never a
+// guess. Replacement lines written at tier 2 keep the file's own indentation where the patch's differs.
 
 interface FileParts {
   br: string;
